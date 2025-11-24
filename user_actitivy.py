@@ -1,30 +1,27 @@
-import sys 
-import json
-import urllib.request
-import urllib.error
+import requests
 
 def fetch_github_activity(username):
     url = f"https://api.github.com/users/{username}/events"
     try:
-        with urllib.request.urlopen(url) as response:
-            if response.status != 200 :
-                print(f"Ошибка : статус {response.status}")
-                return
-            data = response.read()
-            events = json.loads(data)
-            if not events:
-                print("нет недавней активности для пользователя")
-                return
-            for event in events:
-                print(format_event(event))
-    except urllib.error.HTTPError as e :
-        if e.code == 404 :
+        response = requests.get(url)
+        if response.status_code == 404:
             print("Ошибка: пользователь не найден")
-        else :
-            print(f"Ошибка HTTP {e.code}")
-    except Exception as e :
+            return
+        elif response.status_code != 200:
+            print(f"Ошибка статус: {response.status_code}")
+            return
+        
+        events = response.json()
+        if not events:
+            print("Нет недавней активности")
+            return
+        
+        for event in events:
+            print(format_event(event))
+    except requests.RequestException as e :
         print(f"Не удалось получить данные: {e}")
-
+        
+    
 
 def format_event(event):
     event_type = event.get("type" , "UnknownEvent")
